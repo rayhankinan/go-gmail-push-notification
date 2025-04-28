@@ -32,9 +32,9 @@ func main() {
 
 				user := "me"
 				request := &gmail.WatchRequest{
-					LabelIds:          []string{"UNREAD"},
-					LabelFilterAction: "include",
-					TopicName:         "projects/devlab-404500/topics/gmail-notification",
+					LabelIds:            []string{"INBOX", "UNREAD"},
+					LabelFilterBehavior: "include",
+					TopicName:           "projects/devlab-404500/topics/gmail-notification",
 				}
 				r, err := srv.Users.Watch(user, request).Do()
 				if err != nil {
