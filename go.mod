@@ -3,11 +3,14 @@ module go-gmail-notification
 go 1.23.0
 
 require (
+	cloud.google.com/go/pubsub v1.49.0
 	github.com/int128/oauth2cli v1.15.1
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/spf13/cobra v1.9.1
 	golang.org/x/oauth2 v0.29.0
 	google.golang.org/api v0.230.0
+	gorm.io/driver/postgres v1.5.11
+	gorm.io/gorm v1.26.0
 )
 
 require (
@@ -16,7 +19,6 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/compute/metadata v0.6.0 // indirect
 	cloud.google.com/go/iam v1.5.2 // indirect
-	cloud.google.com/go/pubsub v1.49.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -26,6 +28,12 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/int128/listener v1.2.0 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/jackc/pgx/v5 v5.5.5 // indirect
+	github.com/jackc/puddle/v2 v2.2.1 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
