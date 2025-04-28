@@ -75,7 +75,7 @@ func main() {
 				}
 
 				request := &gmail.WatchRequest{
-					LabelIds:            []string{"INBOX", "UNREAD"},
+					LabelIds:            []string{"UNREAD"},
 					LabelFilterBehavior: "include",
 					TopicName:           fmt.Sprintf("projects/%s/topics/%s", projectID, topicID),
 				}
