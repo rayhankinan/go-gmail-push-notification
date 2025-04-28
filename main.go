@@ -5,6 +5,7 @@ import (
 	"go-gmail-notification/utils"
 	"log"
 
+	"cloud.google.com/go/pubsub"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/gmail/v1"
 )
@@ -67,7 +68,21 @@ func main() {
 			Use:   "process-message",
 			Short: "Process a message",
 			Long:  "Processes a message from the gmail inbox",
-			Run:   func(cmd *cobra.Command, args []string) {},
+			Run: func(cmd *cobra.Command, args []string) {
+				ctx := cmd.Context()
+
+				sub, err := utils.GetSubscription(ctx, "./secrets/devlab-404500-b2f9a112f6db.json", "devlab-404500", "gmail-notification-sub")
+				if err != nil {
+					log.Fatalf("Unable to get subscription: %v", err)
+				}
+
+				if err := sub.Receive(ctx, func(ctx context.Context, m *pubsub.Message) {
+					log.Printf("Received message: %s", string(m.Data))
+					m.Ack()
+				}); err != nil {
+					log.Fatalf("Unable to receive messages: %v", err)
+				}
+			},
 		},
 	)
 
