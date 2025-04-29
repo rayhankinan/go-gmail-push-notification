@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+
 	"go-gmail-notification/models"
 
 	"gorm.io/gorm"

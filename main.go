@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+
 	"go-gmail-notification/models"
 	"go-gmail-notification/usecase"
 	"go-gmail-notification/utils"
-	"log"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/spf13/cobra"
@@ -25,6 +26,10 @@ const (
 	projectID       = "devlab-404500"
 	topicID         = "gmail-notification"
 	subscriptionID  = "gmail-notification-sub"
+)
+
+var (
+	labelIds = []string{"UNREAD"}
 )
 
 func init() {
@@ -76,7 +81,7 @@ func main() {
 				}
 
 				request := &gmail.WatchRequest{
-					LabelIds:            []string{"UNREAD"},
+					LabelIds:            labelIds,
 					LabelFilterBehavior: "include",
 					TopicName:           fmt.Sprintf("projects/%s/topics/%s", projectID, topicID),
 				}
@@ -146,6 +151,11 @@ func main() {
 				}
 				u := usecase.NewEmailUsecase(db)
 
+				srv, err := utils.GetClient(ctx, secretPath, tokenPath)
+				if err != nil {
+					log.Fatalf("Unable to get Gmail client: %v", err)
+				}
+
 				sub, err := utils.GetSubscription(ctx, credentialsPath, projectID, subscriptionID)
 				if err != nil {
 					log.Fatalf("Unable to get subscription: %v", err)
@@ -159,17 +169,39 @@ func main() {
 						return
 					}
 
-					lastEmail, err := u.GetEmailByAddress(ctx, message.EmailAddress)
+					currentEmail, err := u.GetEmailByAddress(ctx, message.EmailAddress)
 					if err != nil {
 						log.Printf("Failed to find email record: %v", err)
 						m.Nack()
 						return
 					}
 
-					// TODO: Get history list from Gmail API and fetch messages (using lastEmail.LatestHistoryID)
-					log.Printf("Processing message: %+v\n", message)
+					envelopes, err := utils.GetUniqueMessagesFromHistory(srv, user, labelIds, currentEmail.LatestHistoryID)
+					if err != nil {
+						log.Printf("Failed to get unique messages from history: %v", err)
+						m.Nack()
+						return
+					}
 
-					if err := u.UpdateLastHistoryID(ctx, message.EmailAddress, lastEmail.LatestHistoryID, message.HistoryID); err != nil {
+					for _, envelope := range envelopes {
+						message, err := srv.Users.Messages.Get(user, envelope.Id).Format("full").Do()
+						if err != nil {
+							log.Printf("Failed to get message: %v", err)
+							m.Nack()
+							return
+						}
+
+						value, err := message.MarshalJSON()
+						if err != nil {
+							log.Printf("Failed to marshal message: %v", err)
+							m.Nack()
+							return
+						}
+
+						log.Printf("Received a new message: %s\n", value)
+					}
+
+					if err := u.UpdateLastHistoryID(ctx, message.EmailAddress, currentEmail.LatestHistoryID, message.HistoryID); err != nil {
 						log.Printf("Failed to update last history ID: %v", err)
 						m.Nack()
 						return
