@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-gmail-notification/models"
+	"go-gmail-notification/usecase"
 	"go-gmail-notification/utils"
 	"log"
 
@@ -13,7 +14,6 @@ import (
 	"google.golang.org/api/gmail/v1"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 const (
@@ -63,6 +63,7 @@ func main() {
 				if err != nil {
 					log.Fatalf("Failed to connect to database: %v", err)
 				}
+				u := usecase.NewEmailUsecase(db)
 
 				srv, err := utils.GetClient(ctx, secretPath, tokenPath)
 				if err != nil {
@@ -84,19 +85,14 @@ func main() {
 					log.Fatalf("Unable to watch inbox: %v", err)
 				}
 
-				email := models.Email{
-					Email:           profile.EmailAddress,
-					Expiration:      r.Expiration,
-					LatestHistoryID: r.HistoryId,
-				}
-				if err := db.Clauses(
-					clause.OnConflict{
-						OnConstraint: "uni_emails_email",
-						DoUpdates: clause.AssignmentColumns(
-							[]string{"created_at", "updated_at", "deleted_at", "expiration", "latest_history_id"},
-						),
+				if err := u.CreateOrUpdate(
+					ctx,
+					models.Email{
+						Email:           profile.EmailAddress,
+						Expiration:      r.Expiration,
+						LatestHistoryID: r.HistoryId,
 					},
-				).Create(&email).Error; err != nil {
+				); err != nil {
 					log.Fatalf("Failed to create email record: %v", err)
 				}
 
@@ -114,6 +110,7 @@ func main() {
 				if err != nil {
 					log.Fatalf("Failed to connect to database: %v", err)
 				}
+				u := usecase.NewEmailUsecase(db)
 
 				srv, err := utils.GetClient(ctx, secretPath, tokenPath)
 				if err != nil {
@@ -129,7 +126,7 @@ func main() {
 					log.Fatalf("Unable to stop watch: %v", err)
 				}
 
-				if err := db.Where("email = ?", profile.EmailAddress).Delete(&models.Email{}).Error; err != nil {
+				if err := u.Delete(ctx, profile.EmailAddress); err != nil {
 					log.Fatalf("Failed to delete email record: %v", err)
 				}
 
@@ -147,6 +144,7 @@ func main() {
 				if err != nil {
 					log.Fatalf("Failed to connect to database: %v", err)
 				}
+				u := usecase.NewEmailUsecase(db)
 
 				sub, err := utils.GetSubscription(ctx, credentialsPath, projectID, subscriptionID)
 				if err != nil {
@@ -161,20 +159,18 @@ func main() {
 						return
 					}
 
-					lastEmail := models.Email{}
-					if err := db.Where("email = ?", message.EmailAddress).First(&lastEmail).Error; err != nil {
+					lastEmail, err := u.GetEmailByAddress(ctx, message.EmailAddress)
+					if err != nil {
 						log.Printf("Failed to find email record: %v", err)
 						m.Nack()
 						return
 					}
 
-					// TODO: Get history list from Gmail API and fetch messages
+					// TODO: Get history list from Gmail API and fetch messages (using lastEmail.LatestHistoryID)
 					log.Printf("Processing message: %+v\n", message)
 
-					if err := db.Model(&models.Email{}).Where("email = ?", message.EmailAddress).Updates(models.Email{
-						LatestHistoryID: message.HistoryID,
-					}).Error; err != nil {
-						log.Printf("Failed to update email record: %v", err)
+					if err := u.UpdateLastHistoryID(ctx, message.EmailAddress, lastEmail.LatestHistoryID, message.HistoryID); err != nil {
+						log.Printf("Failed to update last history ID: %v", err)
 						m.Nack()
 						return
 					}
