@@ -34,12 +34,15 @@ func GetUniqueMessagesFromHistory(srv *gmail.Service, user string, labelIds []st
 		}
 
 		for _, history := range historyResponse.History {
+			// Add messages that are added to the inbox
 			for _, messageAdded := range history.MessagesAdded {
 				if _, exists := setID[messageAdded.Message.Id]; !exists {
 					messages = append(messages, messageAdded.Message)
 					setID[messageAdded.Message.Id] = struct{}{}
 				}
 			}
+
+			// Check if the label IDs we monitor is one of the labels being added
 			for _, labelAdded := range history.LabelsAdded {
 				if _, exists := setID[labelAdded.Message.Id]; Intersects(labelAdded.LabelIds, labelIds) && !exists {
 					messages = append(messages, labelAdded.Message)
