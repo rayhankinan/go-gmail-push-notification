@@ -165,21 +165,18 @@ func main() {
 					message := models.Message{}
 					if err := json.Unmarshal(m.Data, &message); err != nil {
 						log.Printf("Failed to unmarshal message: %v", err)
-						m.Nack()
 						return
 					}
 
 					currentEmail, err := u.GetEmailByAddress(ctx, message.EmailAddress)
 					if err != nil {
 						log.Printf("Failed to find email record: %v", err)
-						m.Nack()
 						return
 					}
 
 					envelopes, err := utils.GetUniqueMessagesFromHistory(srv, user, labelIds, currentEmail.LatestHistoryID)
 					if err != nil {
 						log.Printf("Failed to get unique messages from history: %v", err)
-						m.Nack()
 						return
 					}
 
@@ -187,14 +184,12 @@ func main() {
 						message, err := srv.Users.Messages.Get(user, envelope.Id).Format("full").Do()
 						if err != nil {
 							log.Printf("Failed to get message: %v", err)
-							m.Nack()
 							return
 						}
 
 						value, err := message.MarshalJSON()
 						if err != nil {
 							log.Printf("Failed to marshal message: %v", err)
-							m.Nack()
 							return
 						}
 
@@ -203,7 +198,6 @@ func main() {
 
 					if err := u.UpdateLastHistoryID(ctx, message.EmailAddress, currentEmail.LatestHistoryID, message.HistoryID); err != nil {
 						log.Printf("Failed to update last history ID: %v", err)
-						m.Nack()
 						return
 					}
 
