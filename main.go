@@ -174,7 +174,7 @@ func main() {
 						return
 					}
 
-					envelopes, err := utils.GetUniqueMessagesFromHistory(srv, user, labelIds, currentEmail.LatestHistoryID)
+					envelopes, err := utils.GetUniqueMessagesFromHistory(srv, user, currentEmail.LatestHistoryID)
 					if err != nil {
 						log.Printf("Failed to get unique messages from history: %v", err)
 						return

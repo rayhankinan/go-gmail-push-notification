@@ -11,7 +11,7 @@ func GetHistoryIter(srv *gmail.Service, user string, latestHistoryID uint64) ite
 		nextPageToken := ""
 
 		for {
-			history, err := srv.Users.History.List(user).StartHistoryId(latestHistoryID).HistoryTypes("messageAdded", "labelAdded").PageToken(nextPageToken).Do()
+			history, err := srv.Users.History.List(user).StartHistoryId(latestHistoryID).HistoryTypes("messageAdded").PageToken(nextPageToken).Do()
 			if !yield(history, err) {
 				return
 			}
@@ -24,7 +24,7 @@ func GetHistoryIter(srv *gmail.Service, user string, latestHistoryID uint64) ite
 	}
 }
 
-func GetUniqueMessagesFromHistory(srv *gmail.Service, user string, labelIds []string, latestHistoryID uint64) ([]*gmail.Message, error) {
+func GetUniqueMessagesFromHistory(srv *gmail.Service, user string, latestHistoryID uint64) ([]*gmail.Message, error) {
 	messages := []*gmail.Message{}
 	setID := make(map[string]struct{})
 
@@ -39,14 +39,6 @@ func GetUniqueMessagesFromHistory(srv *gmail.Service, user string, labelIds []st
 				if _, exists := setID[messageAdded.Message.Id]; !exists {
 					messages = append(messages, messageAdded.Message)
 					setID[messageAdded.Message.Id] = struct{}{}
-				}
-			}
-
-			// Check if the label IDs we monitor is one of the labels being added
-			for _, labelAdded := range history.LabelsAdded {
-				if _, exists := setID[labelAdded.Message.Id]; Intersects(labelAdded.LabelIds, labelIds) && !exists {
-					messages = append(messages, labelAdded.Message)
-					setID[labelAdded.Message.Id] = struct{}{}
 				}
 			}
 		}
