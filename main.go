@@ -187,7 +187,7 @@ func main() {
 							return
 						}
 
-						value, err := message.MarshalJSON()
+						value, err := json.MarshalIndent(message, "", "\t")
 						if err != nil {
 							log.Printf("Failed to marshal message: %v", err)
 							return
