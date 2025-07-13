@@ -11,7 +11,7 @@ func GetHistoryIter(srv *gmail.Service, user string, latestHistoryID uint64) ite
 		nextPageToken := ""
 
 		for {
-			history, err := srv.Users.History.List(user).StartHistoryId(latestHistoryID).HistoryTypes("messageAdded").PageToken(nextPageToken).Do()
+			history, err := srv.Users.History.List(user).StartHistoryId(latestHistoryID).LabelId("UNREAD").HistoryTypes("messageAdded").PageToken(nextPageToken).Do()
 			if !yield(history, err) {
 				return
 			}
@@ -24,9 +24,8 @@ func GetHistoryIter(srv *gmail.Service, user string, latestHistoryID uint64) ite
 	}
 }
 
-func GetUniqueMessagesFromHistory(srv *gmail.Service, user string, latestHistoryID uint64) ([]*gmail.Message, error) {
+func GetMessagesFromHistory(srv *gmail.Service, user string, latestHistoryID uint64) ([]*gmail.Message, error) {
 	messages := []*gmail.Message{}
-	setID := make(map[string]struct{})
 
 	for historyResponse, err := range GetHistoryIter(srv, user, latestHistoryID) {
 		if err != nil {
@@ -36,10 +35,7 @@ func GetUniqueMessagesFromHistory(srv *gmail.Service, user string, latestHistory
 		for _, history := range historyResponse.History {
 			// Add messages that are added to the inbox
 			for _, messageAdded := range history.MessagesAdded {
-				if _, exists := setID[messageAdded.Message.Id]; !exists {
-					messages = append(messages, messageAdded.Message)
-					setID[messageAdded.Message.Id] = struct{}{}
-				}
+				messages = append(messages, messageAdded.Message)
 			}
 		}
 	}

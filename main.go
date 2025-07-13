@@ -28,10 +28,6 @@ const (
 	subscriptionID  = "gmail-notification-sub"
 )
 
-var (
-	labelIds = []string{"UNREAD"}
-)
-
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 }
@@ -81,7 +77,7 @@ func main() {
 				}
 
 				request := &gmail.WatchRequest{
-					LabelIds:            labelIds,
+					LabelIds:            []string{"UNREAD"},
 					LabelFilterBehavior: "include",
 					TopicName:           fmt.Sprintf("projects/%s/topics/%s", projectID, topicID),
 				}
@@ -174,7 +170,7 @@ func main() {
 						return
 					}
 
-					envelopes, err := utils.GetUniqueMessagesFromHistory(srv, user, currentEmail.LatestHistoryID)
+					envelopes, err := utils.GetMessagesFromHistory(srv, user, currentEmail.LatestHistoryID)
 					if err != nil {
 						log.Printf("Failed to get unique messages from history: %v", err)
 						return
