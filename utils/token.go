@@ -19,9 +19,11 @@ func GetToken(ctx context.Context, config *oauth2.Config) (*oauth2.Token, error)
 		OAuth2Config: oauth2.Config{
 			ClientID:     config.ClientID,
 			ClientSecret: config.ClientSecret,
-			Endpoint:     config.Endpoint,
-			RedirectURL:  config.RedirectURL,
-			Scopes:       config.Scopes,
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  config.Endpoint.AuthURL,
+				TokenURL: config.Endpoint.TokenURL,
+			},
+			Scopes: config.Scopes,
 		},
 		AuthCodeOptions:      []oauth2.AuthCodeOption{oauth2.S256ChallengeOption(pkceVerifier)},
 		TokenRequestOptions:  []oauth2.AuthCodeOption{oauth2.VerifierOption(pkceVerifier)},
