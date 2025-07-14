@@ -14,7 +14,6 @@ func GetToken(ctx context.Context, config *oauth2.Config) (*oauth2.Token, error)
 	ready := make(chan string, 1)
 	defer close(ready)
 
-	pkceVerifier := oauth2.GenerateVerifier()
 	cli := oauth2cli.Config{
 		OAuth2Config: oauth2.Config{
 			ClientID:     config.ClientID,
@@ -25,8 +24,8 @@ func GetToken(ctx context.Context, config *oauth2.Config) (*oauth2.Token, error)
 			},
 			Scopes: config.Scopes,
 		},
-		AuthCodeOptions:      []oauth2.AuthCodeOption{oauth2.S256ChallengeOption(pkceVerifier)},
-		TokenRequestOptions:  []oauth2.AuthCodeOption{oauth2.VerifierOption(pkceVerifier)},
+		AuthCodeOptions:      []oauth2.AuthCodeOption{oauth2.AccessTypeOffline},
+		TokenRequestOptions:  []oauth2.AuthCodeOption{},
 		LocalServerReadyChan: ready,
 		Logf:                 log.Printf,
 	}
