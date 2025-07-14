@@ -6,20 +6,15 @@ import (
 	"log"
 
 	"github.com/int128/oauth2cli"
-	"github.com/int128/oauth2cli/oauth2params"
 	"github.com/pkg/browser"
 	"golang.org/x/oauth2"
 )
 
 func GetToken(ctx context.Context, config *oauth2.Config) (*oauth2.Token, error) {
-	pkce, err := oauth2params.NewPKCE()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create PKCE: %w", err)
-	}
-
 	ready := make(chan string, 1)
 	defer close(ready)
 
+	pkceVerifier := oauth2.GenerateVerifier()
 	cli := oauth2cli.Config{
 		OAuth2Config: oauth2.Config{
 			ClientID:     config.ClientID,
@@ -28,8 +23,8 @@ func GetToken(ctx context.Context, config *oauth2.Config) (*oauth2.Token, error)
 			RedirectURL:  config.RedirectURL,
 			Scopes:       config.Scopes,
 		},
-		AuthCodeOptions:      pkce.AuthCodeOptions(),
-		TokenRequestOptions:  pkce.TokenRequestOptions(),
+		AuthCodeOptions:      []oauth2.AuthCodeOption{oauth2.S256ChallengeOption(pkceVerifier)},
+		TokenRequestOptions:  []oauth2.AuthCodeOption{oauth2.VerifierOption(pkceVerifier)},
 		LocalServerReadyChan: ready,
 		Logf:                 log.Printf,
 	}
