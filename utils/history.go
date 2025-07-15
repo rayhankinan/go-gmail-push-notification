@@ -11,7 +11,7 @@ func GetHistoryIter(srv *gmail.Service, user string, latestHistoryID uint64) ite
 		nextPageToken := ""
 
 		for {
-			history, err := srv.Users.History.List(user).StartHistoryId(latestHistoryID).LabelId("UNREAD").HistoryTypes("messageAdded", "labelAdded").PageToken(nextPageToken).Do()
+			history, err := srv.Users.History.List(user).StartHistoryId(latestHistoryID).LabelId("UNREAD").HistoryTypes("messageAdded").PageToken(nextPageToken).Do()
 			if !yield(history, err) {
 				return
 			}
